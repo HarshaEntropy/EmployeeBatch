@@ -3,25 +3,37 @@ package org.imaginnovate.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 
 @Entity
 @Data
 public class Employee {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long employeeId;
 
-    private String employeeId;
+    @Column(nullable = false)
     private String firstName;
+
+    @Column(nullable = false)
     private String lastName;
+
+    @Column(nullable = false, unique = true)
     private String email;
-    private String doj;
-    private double salary;
 
-    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
-    private Set<PhoneNumber> phoneNumbers;
+    @Column(nullable = false)
+    private LocalDate doj;
 
+    @Column(nullable = false)
+    private BigDecimal salary;
+
+    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<PhoneNumber> phoneNumbers;
+
+    @Transient
+    private String phoneNumbersAsString;
     // Getters and Setters
 }
 

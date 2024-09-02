@@ -17,7 +17,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/api/employees")
-    public ResponseEntity<Employee> getEmployee(@RequestParam(required = false) String employeeId,
+    public ResponseEntity<Employee> getEmployee(@RequestParam(required = false) Long employeeId,
                                                 @RequestParam(required = false) String email) {
         Employee employee = null;
 
