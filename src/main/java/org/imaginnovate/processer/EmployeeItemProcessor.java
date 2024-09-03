@@ -1,19 +1,22 @@
-package org.imaginnovate.service;
+package org.imaginnovate.processer;
 
 import org.imaginnovate.entity.Employee;
 import org.imaginnovate.entity.PhoneNumber;
+import org.imaginnovate.repository.EmployeeRepository;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-@Component
-public class EmployeeProcessor implements ItemProcessor<Employee, Employee> {
+import java.util.Optional;
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+@Component
+public class EmployeeItemProcessor implements ItemProcessor<Employee, Employee> {
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
 
     @Override
     public Employee process(Employee employee) throws Exception {
@@ -38,7 +41,7 @@ public class EmployeeProcessor implements ItemProcessor<Employee, Employee> {
         }
         employee.setEmail(email);
 
-        // Ensure DOJ is properly set and formatted
+        // Check for null DOJ
         if (employee.getDoj() == null) {
             throw new IllegalArgumentException("Date of Joining (DOJ) is required for Employee ID: " + employee.getEmployeeId());
         }
@@ -48,25 +51,42 @@ public class EmployeeProcessor implements ItemProcessor<Employee, Employee> {
             throw new IllegalArgumentException("Salary must be greater than zero for Employee ID: " + employee.getEmployeeId());
         }
 
-        // Process phone numbers (split by delimiter and validate format)
-        String phoneNumbers = employee.getPhoneNumbersAsString();
-        if (phoneNumbers != null && !phoneNumbers.trim().isEmpty()) {
-            List<PhoneNumber> validPhoneNumbers = new ArrayList<>();
-            String[] phoneNumberArray = phoneNumbers.split(";"); // Adjust delimiter if necessary
-            for (String phoneNumber : phoneNumberArray) {
-                phoneNumber = phoneNumber.trim();
+        // Process phone numbers
+        List<PhoneNumber> validPhoneNumbers = new ArrayList<>();
+        String phoneNumbersAsString = employee.getPhoneNumbersAsString();
+
+        if (phoneNumbersAsString != null && !phoneNumbersAsString.trim().isEmpty()) {
+            String[] phoneNumberArray = phoneNumbersAsString.split(";");
+            for (String phoneNumberStr : phoneNumberArray) {
+                String phoneNumber = phoneNumberStr.trim();
                 if (isValidPhoneNumber(phoneNumber)) {
-                    validPhoneNumbers.add(new PhoneNumber(phoneNumber, employee));
+                    PhoneNumber phoneNumberEntity = new PhoneNumber(phoneNumber, employee);
+                    validPhoneNumbers.add(phoneNumberEntity);
                 } else {
-                    throw new IllegalArgumentException("Invalid phone number for Employee ID: " + employee.getEmployeeId());
+                    throw new IllegalArgumentException("Invalid phone number format for Employee ID: " + employee.getEmployeeId());
                 }
             }
-            employee.setPhoneNumbers(validPhoneNumbers);
-        } else {
-            employee.setPhoneNumbers(new ArrayList<>()); // Ensure phoneNumbers is initialized if not provided
         }
 
-        return employee; // Return processed employee data
+        employee.setPhoneNumbers(validPhoneNumbers);
+
+        // Check if employee already exists in the database
+        Optional<Employee> existingEmployee = employeeRepository.findByEmployeeId(employee.getEmployeeId());
+
+        if (existingEmployee.isPresent()) {
+            // Update existing employee
+            Employee existing = existingEmployee.get();
+            existing.setFirstName(employee.getFirstName());
+            existing.setLastName(employee.getLastName());
+            existing.setEmail(employee.getEmail());
+            existing.setDoj(employee.getDoj());
+            existing.setSalary(employee.getSalary());
+            existing.setPhoneNumbers(validPhoneNumbers);
+            return existing;
+        } else {
+            // New employee, create and save
+            return employee;
+        }
     }
 
     private boolean isValidPhoneNumber(String phoneNumber) {

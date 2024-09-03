@@ -27,13 +27,6 @@ public class EmployeeFieldSetMapper implements FieldSetMapper<Employee> {
         // Process phone numbers
         String phoneNumbers = fieldSet.readString("phoneNumbers").trim();
         employee.setPhoneNumbersAsString(phoneNumbers);
-        if (!phoneNumbers.isEmpty()) {
-            // Assuming phone numbers are separated by a delimiter
-            List<PhoneNumber> phoneNumberList = Collections.singletonList(new PhoneNumber(phoneNumbers, employee));
-            employee.setPhoneNumbers(phoneNumberList);
-        } else {
-            employee.setPhoneNumbers(Collections.emptyList());
-        }
 
         return employee;
     }
