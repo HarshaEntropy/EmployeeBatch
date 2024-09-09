@@ -1,5 +1,6 @@
 package org.imaginnovate.processer;
 
+import lombok.RequiredArgsConstructor;
 import org.imaginnovate.entity.Employee;
 import org.imaginnovate.entity.PhoneNumber;
 import org.imaginnovate.repository.EmployeeRepository;
@@ -13,10 +14,9 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
+@RequiredArgsConstructor
 public class EmployeeItemProcessor implements ItemProcessor<Employee, Employee> {
-
-    @Autowired
-    private EmployeeRepository employeeRepository;
+    private final EmployeeRepository employeeRepository;
 
     @Override
     public Employee process(Employee employee) throws Exception {

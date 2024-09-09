@@ -1,26 +1,42 @@
 package org.imaginnovate.reader;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.imaginnovate.config.EmployeeFieldSetMapper;
 import org.imaginnovate.entity.Employee;
+import org.springframework.batch.item.ExecutionContext;
+import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Component;
 
-@Component
-public class EmployeeItemReader {
+//import j.annotation.PostConstruct;
+//import javax.annotation.PreDestroy;
 
-    @Bean
-    public FlatFileItemReader<Employee> itemReader() {
-        FlatFileItemReader<Employee> itemReader = new FlatFileItemReader<>();
+@Component
+public class EmployeeItemReader implements ItemReader<Employee> {
+
+    private final FlatFileItemReader<Employee> itemReader;
+
+    public EmployeeItemReader() {
+        this.itemReader = new FlatFileItemReader<>();
         itemReader.setResource(new FileSystemResource("src/main/resources/employees.csv"));
         itemReader.setName("csv-reader");
-        itemReader.setLinesToSkip(1);  // Skip header row
+        itemReader.setLinesToSkip(1); // Skip header row
         itemReader.setLineMapper(lineMapper());
-        return itemReader;
+    }
+
+    @PostConstruct
+    public void initialize() {
+        itemReader.open(new ExecutionContext()); // Initialize context if needed
+    }
+
+    @Override
+    public Employee read() throws Exception {
+        return itemReader.read(); // Read one employee at a time
     }
 
     private LineMapper<Employee> lineMapper() {
@@ -34,5 +50,10 @@ public class EmployeeItemReader {
         lineMapper.setFieldSetMapper(new EmployeeFieldSetMapper());
         lineMapper.setLineTokenizer(tokenizer);
         return lineMapper;
+    }
+
+    @PreDestroy
+    public void close() {
+        itemReader.close(); // Close the reader when the application context is destroyed
     }
 }
