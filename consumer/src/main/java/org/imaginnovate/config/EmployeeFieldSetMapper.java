@@ -2,13 +2,10 @@ package org.imaginnovate.config;
 import org.springframework.batch.item.file.transform.FieldSet;
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
 import org.imaginnovate.entity.Employee;
-import org.imaginnovate.entity.PhoneNumber;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.List;
 
 public class EmployeeFieldSetMapper implements FieldSetMapper<Employee> {
 

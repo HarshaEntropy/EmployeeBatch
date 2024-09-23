@@ -1,41 +1,49 @@
 package org.imaginnovate.service;
 
-import org.imaginnovate.entity.BatchProcess;
-import org.imaginnovate.entity.Employee;
-import org.imaginnovate.entity.ErrorLog;
-import org.imaginnovate.entity.PhoneNumber;
-import org.imaginnovate.repository.BatchProcessRepository;
-import org.imaginnovate.repository.EmployeeRepository;
-import org.imaginnovate.repository.ErrorLogRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.jms.TextMessage;
+import lombok.RequiredArgsConstructor;
+import org.imaginnovate.sheduler.BatchScheduler;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
 
 @Service
+//@RequiredArgsConstructor
 public class EmployeeBatchProcessor {
+    @Value("${spring.activemq.topic}")
+    String topic;
 
-    private final EmployeeRepository employeeRepository;
-    private final BatchProcessRepository batchProcessRepository;
-    private final ErrorLogRepository errorLogRepository;
+    @Value("${spring.activemq.queue}")
+    String queue;
 
-    public EmployeeBatchProcessor(EmployeeRepository employeeRepository,
-                                  BatchProcessRepository batchProcessRepository,
-                                  ErrorLogRepository errorLogRepository) {
-        this.employeeRepository = employeeRepository;
-        this.batchProcessRepository = batchProcessRepository;
-        this.errorLogRepository = errorLogRepository;
+    @Autowired
+    JmsTemplate jmsTemplate;
+
+    private final BatchScheduler batchScheduler;
+
+    public EmployeeBatchProcessor(BatchScheduler batchScheduler) {
+        this.batchScheduler = batchScheduler;
+    }
+
+    @Scheduled(cron = "0 */2 * * * ?")
+    public void sendToQueue() throws JsonProcessingException {
+        try {
+          String jsonObj ="Creating batch request";
+            jmsTemplate.send(queue, messageCreator -> {
+                TextMessage message = messageCreator.createTextMessage();
+                System.out.println(jsonObj);
+                batchScheduler.runEmployeeBatchJob();
+                message.setText(jsonObj);
+
+                return message;
+            });
+        }
+        catch (Exception ex) {
+            System.out.println("ERROR in sending message to queue");
+        }
     }
 
 //    @Scheduled(cron = "0  */5 * * ?") // Every day at 11:30 AM
