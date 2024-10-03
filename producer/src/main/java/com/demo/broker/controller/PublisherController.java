@@ -28,4 +28,13 @@ public class PublisherController {
             return new ResponseEntity<>(exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @PostMapping("/topic/{topic}")
+    public ResponseEntity<String> publishTopic(@PathVariable String topic, @RequestBody Message message) {
+        try {
+            producer.sendTopic(topic,message);
+            return new ResponseEntity<>("Message Sent", HttpStatus.OK);
+        } catch (Exception exception) {
+            return new ResponseEntity<>(exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

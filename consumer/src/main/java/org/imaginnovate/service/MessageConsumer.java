@@ -27,4 +27,12 @@ public class MessageConsumer {
         batchScheduler.runEmployeeBatchJob();
 
     }
+    @JmsListener(destination = "${spring.activemq.topic}",subscription = "batchTopic")
+    public void messageListenerTopic(String message) {
+
+        LOGGER.info("Message received topic, {}", message);
+        batchScheduler.runEmployeeBatchJob();
+
+    }
+
 }

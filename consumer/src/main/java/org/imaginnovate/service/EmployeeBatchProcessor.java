@@ -28,7 +28,7 @@ public class EmployeeBatchProcessor {
         this.batchScheduler = batchScheduler;
     }
 
-    @Scheduled(cron = "0 */2 * * * ?")
+//    @Scheduled(cron = "0 */2 * * * ?")
     public void sendToQueue() throws JsonProcessingException {
         try {
           String jsonObj ="Creating batch request";

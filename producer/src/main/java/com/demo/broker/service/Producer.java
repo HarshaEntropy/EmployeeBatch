@@ -33,4 +33,14 @@ public class Producer {
             throw new RuntimeException(e);
         }
     }
+
+    public void sendTopic(String topic, Message message) {
+        try {
+            String jmsMessage = mapper.writeValueAsString(message);
+            logger.info("Sending Message :: {}", jmsMessage);
+            jmsTemplate.convertAndSend(topic+"Topic", jmsMessage);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
